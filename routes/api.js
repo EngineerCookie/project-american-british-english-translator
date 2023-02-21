@@ -10,4 +10,13 @@ module.exports = function (app) {
     .post((req, res) => {
       
     });
+
+  app.route('/test')
+  .get((req, res) => {
+    let testArr = ['one', 'two.'];
+    let regex = new RegExp('^two$');
+    testArr[1] = testArr[1].replace(regex, 'three')
+    console.log(testArr)
+    res.send('testerino');
+  })
 };
