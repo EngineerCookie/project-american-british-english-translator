@@ -109,31 +109,4 @@ suite('Unit Tests', () => {
         });
 
     });
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-
-Highlight translation in Mangoes are my favorite fruit.
-Highlight translation in I ate yogurt for breakfast.
-Highlight translation in We watched the footie match for a while.
-4. Highlight translation in Paracetamol takes up to an hour to work.
-
-*/
+}); 
