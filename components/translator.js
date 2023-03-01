@@ -5,67 +5,100 @@ const britishOnly = require('./british-only.js')
 
 class Translator {
     translate(string, language) {
-        function translatorLogic(word, regex, source_in, source_out) {
-            let i = source_in.indexOf(word.toLowerCase());
-
-            if (word == word[0].toUpperCase() + word.slice(1)) { //if source is capitalized
-                word = word.toLowerCase().replace(regex, source_out[i]);
-                word = word[0].toUpperCase() + word.slice(1);
-                return word
-            }
-            word = word.replace(regex, source_out[i]);
-            return word
-        }
-           
-        switch (language) {
+        let dictionary_in, dictionary_out, timeFormat;
+        
+        //Values and parameters setter depending on language selected
+        switch (language) { 
             case 'american-to-british':
-                let  // [_in] suffix is for input; [_out] suffix is for output 
-                    aOnly_in = Object.keys(americanOnly),
-                    aOnly_out = Object.values(americanOnly),
+                dictionary_in = [...Object.keys(americanOnly), ...Object.keys(americanToBritishSpelling), ...Object.keys(americanToBritishTitles)];
 
-                    a2b_in = Object.keys(americanToBritishSpelling),
-                    a2b_out = Object.values(americanToBritishSpelling),
+                dictionary_out = (word) => {
+                    let found = {}, result;
 
-                    a2bTitle_in = Object.keys(americanToBritishTitles),
-                    a2bTitle_out = Object.values(americanToBritishTitles);
-                let result = string.split(' ');
-                let change = 0; //track instances of word translated
-                console.log(result)
-                result.forEach(word => {
-                    let regString = `^${word.toLowerCase()}[.,]*$`
-                    let regex = new RegExp(regString);
-                    console.log(regex)
-                    let index = result.indexOf(word)
-                    let translated;
-                    if (regex.test(a2bTitle_in)) {
-                        change++
-                        console.log(`target word  is  "${word}" and the if is 1`)
-                        console.log(regex.test(a2bTitle_in))
-                        translated = translatorLogic(word, regex, a2bTitle_in, a2bTitle_out);
-                        result[index] = result[index].replace(new RegExp(word), translated);
-                    };
-                    if (regex.test(a2b_in)) {
-                        change++
-                        console.log(`target word  is  "${word}" and the if is 2`)
-                        console.log(regex.test(a2b_in))
-                        translated = translatorLogic(word, regex, a2b_in, a2b_out);
-                        result[index] = result[index].replace(new RegExp(word), translated);
-                    };
-                    if (regex.test(aOnly_in)) {
-                        change++
-                        console.log(`target word  is  "${word}" and the if is 3`)
-                        console.log(regex.test(aOnly_in))
-                        translated = translatorLogic(word, regex, aOnly_in, aOnly_out);
-                        result[index] = result[index].replace(new RegExp(word), translated);
-                    };
-                })
+                    found.langOnly = americanOnly[word] || undefined;
 
-                return result.join(' ');
+                    found.langSpelling = americanToBritishSpelling[word] || undefined;
+
+                    found.langTitle = americanToBritishTitles[word] || undefined;
+
+                    result = Object.values(found).find(values => {
+                        return values !== undefined
+                    });
+
+                    return result;
+                };
+
+                timeFormat = (string) => {
+                    let regex = /([\d]{1,2})(:)([\d]{2})/;
+                    let match = string.match(regex);
+
+                    if (match) {
+                        return string.replace(match[0], `<span class="highlight">${match[1]}.${match[3]}</span>`)
+                    } 
+                    else {return string};
+                };
+
+                break;
+
             case 'british-to-american':
-                return "ahoy"
+                dictionary_in = [...Object.keys(britishOnly), ...Object.values(americanToBritishSpelling), ...Object.values(americanToBritishTitles)];
+
+                dictionary_out = (word) => {
+                    let found = {}, result;
+
+                    found.langOnly = britishOnly[word] || undefined;
+
+                    found.langSpelling = Object.keys(americanToBritishSpelling).find(key => {
+                        return americanToBritishSpelling[key] === word
+                    }) || undefined;
+
+                    found.langTitle = Object.keys(americanToBritishTitles).find(key => {
+                        return americanToBritishTitles[key] === word
+                    }) || undefined;
+
+                    result = Object.values(found).find(values => {
+                        return values !== undefined
+                    });
+
+                    return result;
+                };
+
+                timeFormat = (string) => {
+                    let regex = /([\d]{1,2})(.)([\d]{2})/;
+                    let match = string.match(regex);
+
+                    if (match) {
+                        let result = string.replace(match[0], `<span class="highlight">${match[1]}:${match[3]}</span>`);
+                        return result;
+                    } 
+                    else {return string};
+                };
+
+                break;
             default:
-                console.log('something wrong with Translator.translate()')
-        }
+                throw new Error('invalid language')
+        };
+
+        //Actual translation logic
+        let result = string;
+        
+        dictionary_in.sort((a, b) => b.length - a.length).forEach(entry => {
+            let regStr = ` *${entry}[ !\\.\\;\\:\\,]+`;
+            let regex = new RegExp(regStr, 'i');
+            if (regex.test(string)) {
+                let match = string.match(new RegExp(entry, 'i'))[0];
+                let target = dictionary_out(entry);
+                if (match[0] === match[0].toUpperCase()) {
+                    target = target[0].toUpperCase() + target.slice(1)
+                }
+                result = result.replace(new RegExp(match, 'i'), `<span class="highlight">${target}</span>`);
+            }
+        });
+        result = timeFormat(result);
+        
+        if(result === string) { //checks if no translation has been made
+            return "Everything looks good to me!"
+        } else { return result }
     }
 }
 

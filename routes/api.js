@@ -8,15 +8,15 @@ module.exports = function (app) {
 
   app.route('/api/translate')
     .post((req, res) => {
-      
+      try {
+        let translation = translator.translate(req.body.text, req.body.locale);
+
+        res.json({ 'text' : req.body.text, 'translation': translation})
+      }
+      catch (err) {
+        console.log(err.message)
+        res.json({'error' : err.message})
+      }
     });
 
-  app.route('/test')
-  .get((req, res) => {
-    let testArr = ['one', 'two.'];
-    let regex = new RegExp('^two$');
-    testArr[1] = testArr[1].replace(regex, 'three')
-    console.log(testArr)
-    res.send('testerino');
-  })
 };
